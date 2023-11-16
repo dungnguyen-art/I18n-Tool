@@ -1,19 +1,10 @@
-export interface Item {
-  key: string;
-  name: string;
-  age: number;
-  address: string;
-}
-
 export interface EditableCellProps extends React.HTMLAttributes<HTMLElement> {
   editing: boolean;
-  dataIndex: string;
-  title: any;
-  inputType: 'number' | 'text';
-  record: Item;
-  index: number;
-  children: React.ReactNode;
+  dataIndex: string | string[];
+  inputType: string;
+  record: MyData;
 }
+
 
 export const languages = [
   { title: 'English', dataIndex: 'en' },
@@ -36,3 +27,15 @@ export interface MyData {
   ja: LanguageData;
   ru: LanguageData;
 }
+
+export interface PropsDataRender {
+  record: MyData;
+  dataIndex: string;
+  isEditing: (record: MyData) => boolean;
+}
+
+export const fields = [
+  { name: 'web', label: 'Web' },
+  { name: 'mobi', label: 'Mobi' },
+  { name: 'extension', label: 'Extension' },
+];
