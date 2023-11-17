@@ -8,10 +8,11 @@ export const EditableCell: React.FC<EditableCellProps> = ({
   record,
   title,
   children,
+  ...restProps
 }) => {
   const inputNode = inputType === 'number' ? <InputNumber /> : <Input />;
   return (
-    <td>
+    <td {...restProps}>
       {editing ? (
         <Form.Item
           name={dataIndex}

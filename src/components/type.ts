@@ -14,18 +14,34 @@ export const languages = [
   { title: 'Russian', dataIndex: 'ru' },
 ];
 export interface LanguageData {
-  web: string | null;
-  mobi: string | null;
-  extension: string | null;
+  web?: string | null;
+  mobi?: string | null;
+  extension?: string | null;
 }
 
-export interface MyData {
-  key: string;
-  en: LanguageData;
-  vi: LanguageData;
-  zh: LanguageData;
-  ja: LanguageData;
-  ru: LanguageData;
+export type MyData = {
+  id: string;
+  key : string;
+  en : LanguageData;
+  vi : LanguageData;
+  zh : LanguageData;
+  ja : LanguageData;
+  ru : LanguageData;
+}
+
+export type MyDataStrapi = {
+  id: string;
+  myData: MyData;
+};
+
+export interface StrapiData {
+  attributes:  MyData;
+  id: string
+}
+
+
+export interface LanguageDataPro {
+  [key: string]: LanguageData | string | null | undefined;
 }
 
 export interface PropsDataRender {

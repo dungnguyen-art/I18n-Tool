@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Form, Popconfirm, Table, Typography, Input, Space, Button } from 'antd';
+import { Form, Popconfirm, Table, Typography, Input, Space, Button, Layout } from 'antd';
 import { languages, MyData, LanguageData, fields } from './type';
 import { EditableCell } from './EditableCell';
 import Render from './Render';
@@ -9,6 +9,7 @@ import { SearchOutlined } from '@ant-design/icons';
 import type { InputRef } from 'antd';
 import type { ColumnType, ColumnsType } from 'antd/es/table';
 import type { FilterConfirmProps } from 'antd/es/table/interface';
+const { Header, Footer } = Layout;
 
 interface CustomColumnType<T> extends ColumnType<T> {
   editable?: boolean;
@@ -21,6 +22,9 @@ interface EditableTableProps {
   form: any; // Use the correct type for the form if possible
   editingKey: string;
   setEditingKey: React.Dispatch<React.SetStateAction<string>>;
+  onSearchChange: (value: React.ChangeEvent<HTMLInputElement>) => void;
+  onSearchSubmit: () => void;
+  save: (key: React.Key) => Promise<void>;
 }
 
 const EditableTable: React.FC<EditableTableProps> = ({
@@ -30,10 +34,15 @@ const EditableTable: React.FC<EditableTableProps> = ({
   form,
   editingKey,
   setEditingKey,
+  onSearchChange,
+  onSearchSubmit,
+  save,
 }) => {
   const [searchText, setSearchText] = useState<string>('');
   const [searchedColumn, setSearchedColumn] = useState<string>('');
   const searchInput = useRef<InputRef>(null);
+
+  const [editedRows, setEditedRows] = useState([]);
 
   const handleSearch = (selectedKeys: any, confirm: any, dataIndex: string) => {
     confirm();
@@ -135,7 +144,7 @@ const EditableTable: React.FC<EditableTableProps> = ({
   });
 
   const edit = (record: Partial<MyData> & { key: React.Key }) => {
-    form.setFieldsValue({ name: '', age: '', address: '', ...record });
+    form.setFieldsValue({ ...record });
     setEditingKey(record.key);
   };
 
@@ -143,42 +152,19 @@ const EditableTable: React.FC<EditableTableProps> = ({
     setEditingKey('');
   };
 
-  const save = async (key: React.Key) => {
-    try {
-      const row = (await form.validateFields()) as MyData;
-      const newData = [...data];
-      const index = newData.findIndex((item) => key === item.key);
-      if (index > -1) {
-        const item = newData[index];
-        newData.splice(index, 1, {
-          ...item,
-          ...row,
-        });
-        setData(newData);
-        setEditingKey('');
-      } else {
-        newData.push(row);
-        setData(newData);
-        setEditingKey('');
-      }
-    } catch (errInfo) {
-      console.log('Validate Failed:', errInfo);
-    }
-  };
-
   const columns: CustomColumnType<MyData>[] = [
     {
       title: 'Key',
       dataIndex: 'key',
       width: '14%',
-      editable: true,
+      editable: false,
       ...getColumnSearchProps('key'),
     },
     ...languages.map((language) => ({
       title: language.title,
       dataIndex: language.dataIndex,
       width: '14%',
-      editable: false,
+
       ...getColumnSearchProps(language.dataIndex as keyof MyData),
       render: (_: any, record: MyData) => (
         <Render record={record} dataIndex={language.dataIndex} isEditing={isEditing} />
@@ -191,9 +177,26 @@ const EditableTable: React.FC<EditableTableProps> = ({
         const editable = isEditing(record);
         return editable ? (
           <span>
-            <Typography.Link onClick={() => save(record.key)} style={{ marginRight: 8 }}>
-              Save
-            </Typography.Link>
+            <Popconfirm
+              title="Attention"
+              description={
+                <>
+                  <p>
+                    <strong>Single</strong> mode: Updates all three fields.
+                  </p>
+                  <p>
+                    <strong>Separate</strong> mode: Updates each field individually.
+                  </p>
+                </>
+              }
+              onConfirm={() => {
+                save(record.key);
+              }}
+              okText="Yes"
+              cancelText="No"
+            >
+              <Button style={{ marginRight: 8 }}>Save</Button>
+            </Popconfirm>
             <Popconfirm title="Sure to cancel?" onConfirm={cancel}>
               <a>Cancel</a>
             </Popconfirm>
@@ -215,7 +218,7 @@ const EditableTable: React.FC<EditableTableProps> = ({
       ...col,
       onCell: (record: MyData) => ({
         record,
-        inputType: col.dataIndex === 'key' ? 'number' : 'text',
+        inputType: 'text',
         dataIndex: col.dataIndex,
         title: col.title,
         editing: isEditing(record),
@@ -224,22 +227,74 @@ const EditableTable: React.FC<EditableTableProps> = ({
   });
 
   return (
-    <Form form={form} component={false}>
-      <Table
-        components={{
-          body: {
-            cell: EditableCell,
-          },
-        }}
-        bordered
-        dataSource={data}
-        columns={mergedColumns as ColumnType<MyData>[]}
-        rowClassName="editable-row"
-        pagination={{
-          onChange: cancel,
-        }}
-      />
-    </Form>
+    <>
+      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <Header
+          style={{
+            textAlign: 'center',
+            backgroundColor: 'purple',
+            height: '50px',
+            color: 'white',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <span style={{ flex: '1', display: 'flex', alignItems: 'center' }}>
+            I18N Tool - SubWallet
+          </span>
+          <div>
+            <Input
+              placeholder="Input your Token"
+              style={{ marginLeft: 10, width: 200 }}
+              onChange={onSearchChange}
+              onPressEnter={onSearchSubmit}
+            />
+          </div>
+        </Header>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            flex: 1,
+            overflow: 'hidden',
+          }}
+        >
+          <Form
+            form={form}
+            component={false}
+            style={{ backgroundColor: '#f79e94', flex: 1, overflow: 'auto' }}
+          >
+            <Table
+              components={{
+                body: {
+                  cell: EditableCell,
+                },
+              }}
+              bordered
+              dataSource={data}
+              columns={mergedColumns as ColumnType<MyData>[]}
+              rowClassName="editable-row"
+              pagination={{
+                onChange: cancel,
+              }}
+              scroll={{ y: 600 }}
+              style={{ maxHeight: 'calc(100vh - 200px)', padding: '0 200px' }}
+            />
+          </Form>
+        </div>
+        <Footer
+          style={{
+            textAlign: 'center',
+            backgroundColor: 'purple',
+            color: 'white',
+            height: '50px',
+          }}
+        >
+          SubWallet ©2023 Created by SubWallet Team
+        </Footer>
+      </div>
+    </>
   );
 };
 
