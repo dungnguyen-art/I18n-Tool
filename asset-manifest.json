@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/i18n-tool/static/css/main.edbd2753.css",
+    "main.js": "/i18n-tool/static/js/main.bbc2c929.js",
+    "index.html": "/i18n-tool/index.html",
+    "main.edbd2753.css.map": "/i18n-tool/static/css/main.edbd2753.css.map",
+    "main.bbc2c929.js.map": "/i18n-tool/static/js/main.bbc2c929.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.edbd2753.css",
+    "static/js/main.bbc2c929.js"
+  ]
+}
